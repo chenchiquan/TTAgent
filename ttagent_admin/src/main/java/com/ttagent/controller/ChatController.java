@@ -24,6 +24,11 @@ import java.util.concurrent.Executors;
 public class ChatController {
 
     private static final String PYTHON_CHAT_URL = "http://localhost:8000/chat";
+    // 强制 HTTP/1.1：uvicorn 默认不支持 h2c 升级，HTTP/2 协商会触发 "Unsupported upgrade request"，
+    // 导致请求体 body 丢失 → FastAPI 报 422 Field required。
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .build();
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -39,7 +44,6 @@ public class ChatController {
                 System.out.println("[ChatController] 转发 Python body: " + body);
 
                 // 用 JDK HttpClient POST 调 Python /chat
-                HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(PYTHON_CHAT_URL))
                         .header("Content-Type", "application/json; charset=utf-8")
@@ -48,7 +52,7 @@ public class ChatController {
 
                 // 流式按行读 Python 的 SSE 响应
                 HttpResponse<java.util.stream.Stream<String>> response =
-                        client.send(request, HttpResponse.BodyHandlers.ofLines());
+                        HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofLines());
 
                 for (String line : response.body().toList()) {
                     if (line.startsWith("data:")) {
