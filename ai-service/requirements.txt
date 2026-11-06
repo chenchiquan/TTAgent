@@ -1,0 +1,11 @@
+# TTAgent AI 服务依赖（Python）
+fastapi>=0.110.0
+uvicorn>=0.27.0
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+
+# LLM（DeepSeek，OpenAI 兼容 SDK）
+openai>=1.0.0
+
+# 记忆/向量
+chromadb>=0.5.0
