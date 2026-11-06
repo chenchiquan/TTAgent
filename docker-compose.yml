@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ttagent-mysql
+    restart: unless-stopped
+    ports:
+      - "3307:3306"   # 本机 3307 映射到容器 3306，避开本机已占用的 3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: ttagent
+      MYSQL_USER: ttagent
+      MYSQL_PASSWORD: ttagent123
+    volumes:
+      - ttagent-mysql-data:/var/lib/mysql
+      - ./sql:/docker-entrypoint-initdb.d   # 容器首次启动自动执行 sql 目录下的 .sql，免手动灌库
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone=+08:00
+
+volumes:
+  ttagent-mysql-data:
