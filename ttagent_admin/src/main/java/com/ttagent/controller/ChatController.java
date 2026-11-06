@@ -36,6 +36,7 @@ public class ChatController {
             try {
                 // 序列化请求体（和 Python ChatRequest 对齐）
                 String body = mapper.writeValueAsString(req);
+                System.out.println("[ChatController] 转发 Python body: " + body);
 
                 // 用 JDK HttpClient POST 调 Python /chat
                 HttpClient client = HttpClient.newHttpClient();

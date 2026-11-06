@@ -1,6 +1,7 @@
 package com.ttagent.dto;
 
 import lombok.Data;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -10,5 +11,5 @@ import java.util.Map;
 @Data
 public class ChatRequest {
     private String message;
-    private List<Map<String, String>> history;  // [{"role":"user","content":"..."},{"role":"assistant","content":"..."}]
+    private List<Map<String, String>> history = new ArrayList<>();  // 默认空列表，避免 null
 }
