@@ -1,0 +1,23 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ttagent-admin
+  datasource:
+    # 连 Docker 里的 MySQL（本机 3307 映射），环境变量占位带默认值方便本地测试
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3307}/${MYSQL_DB:ttagent}?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:ttagent}
+    password: ${MYSQL_PASSWORD:ttagent123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  configuration:
+    # 数据库下划线字段自动映射到 Java 驼峰属性（如 flesh_damage -> fleshDamage）
+    map-underscore-to-camel-case: true
+  # 实体类别名包，Mapper XML 里可直接写类名不用全限定名
+  type-aliases-package: com.ttagent.entity
+
+logging:
+  level:
+    com.ttagent: debug
