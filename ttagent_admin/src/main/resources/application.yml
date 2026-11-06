@@ -11,12 +11,18 @@ spring:
     password: ${MYSQL_PASSWORD:ttagent123}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-mybatis:
+mybatis-plus:
   configuration:
     # 数据库下划线字段自动映射到 Java 驼峰属性（如 flesh_damage -> fleshDamage）
     map-underscore-to-camel-case: true
-  # 实体类别名包，Mapper XML 里可直接写类名不用全限定名
+  # 实体类别名包
   type-aliases-package: com.ttagent.entity
+  global-config:
+    db-config:
+      # 软删除：is_deleted=1 已删除，0 未删除（Gun/Ammo/Attachment 用 @TableLogic）
+      logic-delete-field: isDeleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
 
 logging:
   level:
