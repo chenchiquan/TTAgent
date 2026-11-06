@@ -13,6 +13,10 @@ node_modules/
 dist/
 .vite/
 
+# Java / Maven（编译产物 + IDEA 模块文件，不提交）
+target/
+*.iml
+
 # 教材（非项目代码，体积大，接近 GitHub 单文件限制）
 hello_agent.pdf
 
