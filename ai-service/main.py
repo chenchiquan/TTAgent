@@ -1,18 +1,18 @@
-"""TTAgent 后端入口
+"""TTAgent AI 服务
 
-最小可运行骨架，后续逐步补充 Agent、工具、鉴权等模块。
+提供 Agent 对话接口（DeepSeek 流式 + SSE），供 Java 后端 WebClient 转发给前端。
 """
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
-app = FastAPI(
-    title="TTAgent",
-    description="三角洲行动游戏助手后端",
-    version="0.0.1",
-)
+from agent.chat import chat_stream
+from prompt.system_prompt import SYSTEM_PROMPT
 
-# 允许前端跨域访问，开发阶段先放开所有来源
+app = FastAPI(title="TTAgent AI Service", version="0.0.1")
+
+# 允许 Java 后端跨域调用（Java 在 8080，Python 在 8000）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,15 +22,30 @@ app.add_middleware(
 )
 
 
+class ChatRequest(BaseModel):
+    message: str
+    history: list[dict] = []  # [{"role":"user","content":"..."},{"role":"assistant","content":"..."}]
+
+
 @app.get("/")
 def root():
-    return {
-        "name": "TTAgent",
-        "status": "running",
-        "version": "0.0.1",
-    }
+    return {"name": "TTAgent AI Service", "status": "running", "version": "0.0.1"}
 
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.post("/chat")
+def chat(req: ChatRequest):
+    """流式对话接口：SSE 返回逐 token，Java 转发给前端"""
+    def event_stream():
+        try:
+            for chunk in chat_stream(req.message, req.history, SYSTEM_PROMPT):
+                yield f"data: {chunk}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            yield f"data: [ERROR] {e}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
