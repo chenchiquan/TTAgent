@@ -5,6 +5,8 @@
 --           新版本插新行、旧版 is_active=0，下线物品 is_deleted=1（软删除保留历史）
 -- ============================================================
 
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS ttagent
   DEFAULT CHARACTER SET utf8mb4
   DEFAULT COLLATE utf8mb4_unicode_ci;
@@ -58,6 +60,7 @@ CREATE TABLE ammo (
   code          VARCHAR(64)  NOT NULL COMMENT '业务编码',
   name          VARCHAR(64)  NOT NULL COMMENT '弹药名称',
   caliber       VARCHAR(32)  NOT NULL COMMENT '口径，与 guns.caliber 关联',
+  caliber_class VARCHAR(32)  DEFAULT NULL COMMENT '口径分类：大口径/小口径/中口径/冲锋枪口径等',
   damage        INT  DEFAULT NULL COMMENT '伤害',
   penetration   INT  DEFAULT NULL COMMENT '穿透等级',
   version       VARCHAR(16)  NOT NULL DEFAULT 'v1' COMMENT '数据版本号',
