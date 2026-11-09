@@ -1,0 +1,57 @@
+name: Build & Push Docker Images
+
+# 触发条件：push 到 main 自动构建；也支持在 GitHub Actions 页面手动触发
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # 三个镜像并行构建，互不等待
+  build-admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build & Push admin
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ttagent_admin
+          push: true
+          tags: pathfinder/ttagent-admin:latest
+
+  build-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build & Push ai-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ai-service
+          push: true
+          tags: pathfinder/ttagent-ai:latest
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build & Push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: pathfinder/ttagent-frontend:latest
