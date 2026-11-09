@@ -28,6 +28,11 @@ jwt:
   secret: ttagent-he-tao-memory-secret-key-2026-change-me-please-32bytes
   expire: 86400000   # token 有效期 24h（毫秒）
 
+# Java 调 Python /chat 的地址（容器内用容器名 ai-service，本地开发用 localhost）
+python:
+  chat:
+    url: ${PYTHON_CHAT_URL:http://localhost:8000/chat}
+
 logging:
   level:
     com.ttagent: debug

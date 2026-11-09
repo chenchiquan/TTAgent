@@ -3,16 +3,12 @@ services:
     image: mysql:8.0
     container_name: ttagent-mysql
     restart: unless-stopped
+    env_file: docker/.env
     ports:
-      - "3307:3306"   # 本机 3307 映射到容器 3306，避开本机已占用的 3306
-    environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: ttagent
-      MYSQL_USER: ttagent
-      MYSQL_PASSWORD: ttagent123
+      - "3307:3306"   # 宿主 3307 方便 Navicat 连，容器内 3306
     volumes:
       - ttagent-mysql-data:/var/lib/mysql
-      - ./sql:/docker-entrypoint-initdb.d   # 容器首次启动自动执行 sql 目录下的 .sql，免手动灌库
+      - ./sql:/docker-entrypoint-initdb.d   # 首次启动自动建表
     command:
       --character-set-server=utf8mb4
       --collation-server=utf8mb4_unicode_ci
@@ -24,9 +20,49 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-    command: --appendonly yes   # 开 AOF 持久化，容器重启短期记忆不丢（虽然 TTL 2h，无伤大雅）
+    command: --appendonly yes
     volumes:
       - ttagent-redis-data:/data
+
+  admin:
+    image: docker.io/pathfinder/ttagent-admin:latest   # CI 推到 Docker Hub，部署 pull
+    build: ./ttagent_admin                              # 本地开发可 docker-compose build
+    container_name: ttagent-admin
+    restart: unless-stopped
+    env_file: docker/.env
+    environment:
+      # 容器内用容器名访问其它服务（覆盖 .env，确保容器网络正确）
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - PYTHON_CHAT_URL=http://ai-service:8000/chat
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+
+  ai-service:
+    image: docker.io/pathfinder/ttagent-ai:latest
+    build: ./ai-service
+    container_name: ttagent-ai
+    restart: unless-stopped
+    env_file: docker/.env
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    ports:
+      - "8000:8000"   # 开到宿主方便调试，生产可去掉
+    depends_on:
+      - redis
+
+  frontend:
+    image: docker.io/pathfinder/ttagent-frontend:latest
+    build: ./frontend
+    container_name: ttagent-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"   # 用户访问入口 http://localhost
+    depends_on:
+      - admin
 
 volumes:
   ttagent-mysql-data:

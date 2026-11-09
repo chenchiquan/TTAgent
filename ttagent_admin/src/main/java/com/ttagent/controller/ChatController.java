@@ -3,6 +3,7 @@ package com.ttagent.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ttagent.dto.ChatRequest;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -24,7 +25,9 @@ import java.util.concurrent.Executors;
 @RequestMapping("/api/chat")
 public class ChatController {
 
-    private static final String PYTHON_CHAT_URL = "http://localhost:8000/chat";
+    // Python /chat 地址：容器内用容器名 ai-service，本地开发用 localhost，走环境变量注入
+    @Value("${python.chat.url:http://localhost:8000/chat}")
+    private String pythonChatUrl;
     // 强制 HTTP/1.1：uvicorn 默认不支持 h2c 升级，HTTP/2 协商会触发 "Unsupported upgrade request"，
     // 导致请求体 body 丢失 → FastAPI 报 422 Field required。
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
@@ -49,7 +52,7 @@ public class ChatController {
 
                 // 用 JDK HttpClient POST 调 Python /chat
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(PYTHON_CHAT_URL))
+                        .uri(URI.create(pythonChatUrl))
                         .header("Content-Type", "application/json; charset=utf-8")
                         .POST(HttpRequest.BodyPublishers.ofString(body, java.nio.charset.StandardCharsets.UTF_8))
                         .build();
