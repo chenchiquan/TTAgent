@@ -12,5 +12,6 @@ import java.util.Map;
 public class ChatRequest {
     private String message;
     private List<Map<String, String>> history = new ArrayList<>();  // 默认空列表，避免 null
-    private Long userId;   // 由 Java 从 JWT 解析后填入，透传给 Python（记忆体系用）
+    private Long userId;       // 由 Java 从 JWT 解析后填入，透传给 Python（记忆体系用）
+    private String sessionId;  // 前端生成，区分对话线程，透传给 Python
 }

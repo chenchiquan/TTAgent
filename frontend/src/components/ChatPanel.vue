@@ -28,6 +28,7 @@ const input = ref('')
 const messages = ref([])
 const msgBox = ref(null)
 const loading = ref(false)
+const sessionId = ref(crypto.randomUUID())   // 对话线程标识，新对话时换新 id
 
 const scrollDown = async () => {
   await nextTick()
@@ -46,14 +47,14 @@ const send = async () => {
   messages.value.push(assistantMsg)
 
   try {
-    // fetch POST 调 Java /api/chat（SSE 流式）
+    // fetch POST 调 Java /api/chat（SSE 流式），带 token + sessionId
     const res = await fetch(`${api.defaults.baseURL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
-      body: JSON.stringify({ message: userMsg, history: [] })
+      body: JSON.stringify({ message: userMsg, sessionId: sessionId.value })
     })
 
     const reader = res.body.getReader()
@@ -89,10 +90,11 @@ const send = async () => {
   }
 }
 
-// 开启新对话：清空所有消息
+// 开启新对话：清空消息 + 换新 sessionId（隔离新对话的记忆）
 const newChat = () => {
   messages.value = []
   input.value = ''
+  sessionId.value = crypto.randomUUID()
 }
 </script>
 

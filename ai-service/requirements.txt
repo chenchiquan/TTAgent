@@ -9,3 +9,6 @@ openai>=1.0.0
 
 # 记忆/向量
 chromadb>=0.5.0
+
+# Redis（短期记忆）
+redis>=5.0.0

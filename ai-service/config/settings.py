@@ -26,6 +26,10 @@ class Settings:
     MYSQL_PASSWORD: str = os.getenv("MYSQL_PASSWORD", "")
     MYSQL_DB: str = os.getenv("MYSQL_DB", "ttagent")
 
+    # Redis（短期记忆）
+    REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
+    REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
+
     # JWT（后续使用）
     JWT_SECRET: str = os.getenv("JWT_SECRET", "change_me")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")

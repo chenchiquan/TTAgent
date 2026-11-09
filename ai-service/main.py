@@ -1,6 +1,7 @@
 """TTAgent AI 服务
 
-提供 Agent 对话接口（DeepSeek 流式 + SSE），供 Java 后端 WebClient 转发给前端。
+提供 Agent 对话接口（DeepSeek 流式 + SSE），供 Java 后端转发给前端。
+阶段2：记忆改由 Redis 管理，前端只传 message + sessionId。
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,7 +25,8 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     message: str
-    history: list[dict] = []  # [{"role":"user","content":"..."},{"role":"assistant","content":"..."}]
+    userId: int = 0        # Java 从 JWT 解析后透传
+    sessionId: str = ""    # 前端生成，区分对话线程
 
 
 @app.get("/")
@@ -42,7 +44,7 @@ def chat(req: ChatRequest):
     """流式对话接口：SSE 返回逐 token，Java 转发给前端"""
     def event_stream():
         try:
-            for chunk in chat_stream(req.message, req.history, SYSTEM_PROMPT):
+            for chunk in chat_stream(req.message, req.userId, req.sessionId, SYSTEM_PROMPT):
                 yield f"data: {chunk}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:

@@ -18,5 +18,16 @@ services:
       --collation-server=utf8mb4_unicode_ci
       --default-time-zone=+08:00
 
+  redis:
+    image: redis:latest
+    container_name: ttagent-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: --appendonly yes   # 开 AOF 持久化，容器重启短期记忆不丢（虽然 TTL 2h，无伤大雅）
+    volumes:
+      - ttagent-redis-data:/data
+
 volumes:
   ttagent-mysql-data:
+  ttagent-redis-data:
