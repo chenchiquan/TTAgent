@@ -25,8 +25,9 @@ services:
       - ttagent-redis-data:/data
 
   admin:
-    image: docker.io/pathfinder/ttagent-admin:latest   # CI 推到 Docker Hub，部署 pull
-    build: ./ttagent_admin                              # 本地开发可 docker-compose build
+    # 部署时 docker-compose pull 拉这里；本地开发可 docker-compose build
+    image: docker.io/pathfinderccq/ttagent-admin:latest
+    build: ./ttagent_admin
     container_name: ttagent-admin
     restart: unless-stopped
     env_file: docker/.env
@@ -41,7 +42,7 @@ services:
       - mysql
 
   ai-service:
-    image: docker.io/pathfinder/ttagent-ai:latest
+    image: docker.io/pathfinderccq/ttagent-ai:latest
     build: ./ai-service
     container_name: ttagent-ai
     restart: unless-stopped
@@ -55,7 +56,7 @@ services:
       - redis
 
   frontend:
-    image: docker.io/pathfinder/ttagent-frontend:latest
+    image: docker.io/pathfinderccq/ttagent-frontend:latest
     build: ./frontend
     container_name: ttagent-frontend
     restart: unless-stopped

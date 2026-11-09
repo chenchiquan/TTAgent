@@ -22,7 +22,8 @@ jobs:
         with:
           context: ./ttagent_admin
           push: true
-          tags: pathfinder/ttagent-admin:latest
+          # 镜像名用 Secret 里的用户名，避免硬编码写错 namespace
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ttagent-admin:latest
 
   build-ai:
     runs-on: ubuntu-latest
@@ -38,7 +39,7 @@ jobs:
         with:
           context: ./ai-service
           push: true
-          tags: pathfinder/ttagent-ai:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ttagent-ai:latest
 
   build-frontend:
     runs-on: ubuntu-latest
@@ -54,4 +55,4 @@ jobs:
         with:
           context: ./frontend
           push: true
-          tags: pathfinder/ttagent-frontend:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/ttagent-frontend:latest

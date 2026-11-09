@@ -1,27 +1,25 @@
-# 敏感配置（含 API Key/密码，绝不提交）
-.env
+# ===== 敏感配置（绝不提交）=====
+docker/.env
+ai-service/.env
 
-# Python
+# ===== Java =====
+ttagent_admin/target/
+*.class
+
+# ===== Python =====
 __pycache__/
-*.py[cod]
-*.egg-info/
-.venv/
-venv/
+*.pyc
+*.pyo
 
-# Node / 前端
-node_modules/
-dist/
-.vite/
+# ===== 前端 =====
+frontend/node_modules/
+frontend/dist/
 
-# Java / Maven（编译产物 + IDEA 模块文件，不提交）
-target/
-*.iml
-
-# 教材（非项目代码，体积大，接近 GitHub 单文件限制）
-hello_agent.pdf
-
-# IDE / 系统
-.vscode/
+# ===== IDE / 系统 =====
 .idea/
+.vscode/
+*.log
 .DS_Store
-Thumbs.db
+
+# ===== 大文件（教材 PDF 不进仓库）=====
+hello_agent.pdf
