@@ -2,6 +2,7 @@ package com.ttagent.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ttagent.dto.ChatRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -33,7 +34,10 @@ public class ChatController {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @PostMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter chat(@RequestBody ChatRequest req) {
+    public SseEmitter chat(@RequestBody ChatRequest req, HttpServletRequest httpRequest) {
+        // 从 JWT 拦截器注入的 userId（阶段1用户登录，为记忆体系铺路）
+        req.setUserId((Long) httpRequest.getAttribute("userId"));
+
         // 不超时（流式对话可能较慢）
         SseEmitter emitter = new SseEmitter(0L);
 

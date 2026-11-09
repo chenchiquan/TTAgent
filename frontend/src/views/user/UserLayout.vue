@@ -6,6 +6,10 @@
         <el-menu-item index="/">数据</el-menu-item>
       </el-menu>
       <router-link to="/admin" class="admin-link">管理后台</router-link>
+      <span class="user-info">
+        <span class="username">{{ username }}</span>
+        <el-button link type="primary" @click="logout">退出</el-button>
+      </span>
     </el-header>
     <el-main>
       <router-view />
@@ -15,7 +19,7 @@
     <div class="chat-fab" @click="chatVisible = true">对话</div>
 
     <!-- 右侧对话抽屉（可弹出/关闭） -->
-    <el-drawer v-model="chatVisible" title="Agent 对话" direction="rtl" size="380px">
+    <el-drawer v-model="chatVisible" title="涛涛对话" direction="rtl" size="380px">
       <ChatPanel />
     </el-drawer>
   </el-container>
@@ -23,12 +27,19 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import ChatPanel from '../../components/ChatPanel.vue'
 
 const route = useRoute()
+const router = useRouter()
 const activeMenu = computed(() => route.path)
 const chatVisible = ref(false)
+const username = ref(localStorage.getItem('username') || '')
+const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  router.push('/login')
+}
 </script>
 
 <style scoped>
@@ -38,6 +49,8 @@ const chatVisible = ref(false)
 .header :deep(.el-menu) { border-bottom: none; flex: 1; }
 .admin-link { color: #888; text-decoration: none; font-size: 14px; white-space: nowrap; }
 .admin-link:hover { color: #409eff; }
+.user-info { display: flex; align-items: center; gap: 8px; color: #888; font-size: 14px; white-space: nowrap; }
+.username { color: #606266; }
 .chat-fab {
   position: fixed;
   right: 24px;

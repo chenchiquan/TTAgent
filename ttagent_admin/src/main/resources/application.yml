@@ -24,6 +24,10 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
 
+jwt:
+  secret: ttagent-he-tao-memory-secret-key-2026-change-me-please-32bytes
+  expire: 86400000   # token 有效期 24h（毫秒）
+
 logging:
   level:
     com.ttagent: debug

@@ -14,6 +14,7 @@
         :disabled="loading"
       />
       <el-button type="primary" @click="send" :loading="loading">发送</el-button>
+      <el-button @click="newChat" :disabled="loading">新对话</el-button>
     </div>
   </div>
 </template>
@@ -48,7 +49,10 @@ const send = async () => {
     // fetch POST 调 Java /api/chat（SSE 流式）
     const res = await fetch(`${api.defaults.baseURL}/api/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
       body: JSON.stringify({ message: userMsg, history: [] })
     })
 
@@ -83,6 +87,12 @@ const send = async () => {
     loading.value = false
     scrollDown()
   }
+}
+
+// 开启新对话：清空所有消息
+const newChat = () => {
+  messages.value = []
+  input.value = ''
 }
 </script>
 

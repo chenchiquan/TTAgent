@@ -2,7 +2,7 @@
   <div class="chat-view">
     <el-card>
       <template #header>
-        <span>Agent 对话</span>
+        <span>涛涛对话</span>
       </template>
       <el-empty description="对话功能开发中，后续接入 Python AI 服务 SSE 流式输出" />
     </el-card>
