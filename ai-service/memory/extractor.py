@@ -56,7 +56,7 @@ EXTRACT_PROMPT = """你是玩家记忆提取器。从下面这批三角洲行动
 - memory_action: create(创建新记忆)/reinforce(强化已有)/update(更新已有)/contradict(与已有冲突)/reject(玩家否定某项) 之一
 
 ## 输出格式
-严格输出 JSON 数组，无候选记忆时输出空数组 []：
+Output in JSON format. 严格输出 JSON 数组，无候选记忆时输出空数组 []：
 [{{"category":"weapon","memory_key":"weapon.recoil_preference","memory_value":{{"preference":"low","description":"倾向低后坐力枪械"}},"confidence":0.85,"evidence":"玩家说'我喜欢后坐力小的枪'","source_message_ids":[3],"expression_type":"explicit","memory_action":"create"}}]
 
 如果这批对话没有可提取的长期偏好，直接输出 []，不要编造。
@@ -111,7 +111,9 @@ def extract_candidates(user_id: int, dialog: list[dict]) -> list[dict]:
         return candidates
 
     except Exception as e:
-        print(f"[extractor] LLM 调用失败 user_id={user_id}: {e}")
+        import traceback
+        print(f"[extractor] LLM 调用失败 user_id={user_id}: {type(e).__name__}: {e}")
+        traceback.print_exc()
         return []
 
 
