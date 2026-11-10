@@ -15,7 +15,7 @@
 """
 import re
 
-from memory.models import PlayerMemoryKv
+from memory.models import PlayerMemoryKv, STATUS_ACTIVE
 from memory import store
 
 # ===== 校验常量（JSON第三层保障）=====
@@ -193,6 +193,6 @@ def _build_kv(user_id: int, cand: dict, version: int) -> PlayerMemoryKv:
         evidence_count=1,
         expression_type=expr,
         source_message_ids=cand["source_message_ids"],
-        status="active",
+        status=STATUS_ACTIVE,
         version=version,
     )

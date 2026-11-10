@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, desc
 from sqlalchemy.orm import sessionmaker
 
 from config.settings import settings
-from memory.models import Base, PlayerMemoryKv, PlayerMemorySummary, ChatHistory
+from memory.models import Base, PlayerMemoryKv, PlayerMemorySummary, ChatHistory, STATUS_ACTIVE, STATUS_SUPERSEDED, STATUS_REJECTED
 
 # ===== MySQL 连接（同步驱动，贴合现有同步 chat_stream）=====
 engine = create_engine(
@@ -47,7 +47,7 @@ def get_active_kv_by_key(user_id: int, memory_key: str) -> PlayerMemoryKv | None
         return s.query(PlayerMemoryKv).filter(
             PlayerMemoryKv.user_id == user_id,
             PlayerMemoryKv.memory_key == memory_key,
-            PlayerMemoryKv.status == "active",
+            PlayerMemoryKv.status == STATUS_ACTIVE,
         ).order_by(desc(PlayerMemoryKv.version)).first()
 
 
@@ -57,7 +57,7 @@ def get_active_kv_by_category(user_id: int, category: str) -> list[PlayerMemoryK
         return s.query(PlayerMemoryKv).filter(
             PlayerMemoryKv.user_id == user_id,
             PlayerMemoryKv.category == category,
-            PlayerMemoryKv.status == "active",
+            PlayerMemoryKv.status == STATUS_ACTIVE,
         ).order_by(desc(PlayerMemoryKv.confidence)).all()
 
 
@@ -66,7 +66,7 @@ def get_all_active_kv(user_id: int) -> list[PlayerMemoryKv]:
     with Session() as s:
         return s.query(PlayerMemoryKv).filter(
             PlayerMemoryKv.user_id == user_id,
-            PlayerMemoryKv.status == "active",
+            PlayerMemoryKv.status == STATUS_ACTIVE,
         ).order_by(desc(PlayerMemoryKv.confidence)).all()
 
 
@@ -87,7 +87,7 @@ def supersede_kv(kv_id: int) -> None:
     """
     with Session() as s:
         s.query(PlayerMemoryKv).filter(PlayerMemoryKv.id == kv_id).update(
-            {PlayerMemoryKv.status: "superseded"}
+            {PlayerMemoryKv.status: STATUS_SUPERSEDED}
         )
         s.commit()
 
@@ -96,7 +96,7 @@ def reject_kv(kv_id: int) -> None:
     """把某条记忆标记为 rejected（玩家明确否定）"""
     with Session() as s:
         s.query(PlayerMemoryKv).filter(PlayerMemoryKv.id == kv_id).update(
-            {PlayerMemoryKv.status: "rejected"}
+            {PlayerMemoryKv.status: STATUS_REJECTED}
         )
         s.commit()
 

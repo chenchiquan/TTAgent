@@ -12,11 +12,16 @@ from datetime import datetime
 from typing import TypedDict
 
 from sqlalchemy import (
-    BigInteger, Column, DECIMAL, DateTime, Integer, String, Text, JSON,
+    BigInteger, Column, DECIMAL, DateTime, Integer, SmallInteger, String, Text, JSON,
 )
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+
+# ===== status 数字编码常量（TINYINT 存储，省空间省索引）=====
+STATUS_SUPERSEDED = 0   # 被取代（旧版本保留可追溯）
+STATUS_ACTIVE = 1       # 当前有效
+STATUS_REJECTED = 2     # 玩家明确否定
 
 
 class MemoryValue(TypedDict, total=False):
@@ -42,7 +47,7 @@ class PlayerMemoryKv(Base):
     evidence_count = Column(Integer, nullable=False, default=1)
     expression_type = Column(String(24), nullable=False, default="explicit")
     source_message_ids = Column(JSON, nullable=False)        # [1, 5, 12] 消息id数组
-    status = Column(String(16), nullable=False, default="active")  # active/superseded/rejected
+    status = Column(SmallInteger, nullable=False, default=STATUS_ACTIVE)  # 1active/0superseded/2rejected
     version = Column(Integer, nullable=False, default=1)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
@@ -62,7 +67,7 @@ class PlayerMemorySummary(Base):
     source_message_ids = Column(JSON, nullable=False)
     covered_message_range = Column(JSON, nullable=False)     # {"start_msg_id":N,"end_msg_id":M}
     version = Column(Integer, nullable=False, default=1)
-    status = Column(String(16), nullable=False, default="active")
+    status = Column(SmallInteger, nullable=False, default=STATUS_ACTIVE)
     created_at = Column(DateTime, nullable=False, default=datetime.now)
     updated_at = Column(DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
