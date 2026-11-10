@@ -40,3 +40,15 @@ def append_turn(user_id: int, session_id: str, role: str, content: str):
     redis_client.rpush(key, json.dumps({"role": role, "content": content}, ensure_ascii=False))
     redis_client.ltrim(key, -MAX_ROUNDS * 2, -1)   # 只留最后 N 条
     redis_client.expire(key, EXPIRE_SECONDS)
+
+
+def trim_head(user_id: int, session_id: str, n: int) -> list[dict]:
+    """删掉 Redis 最早的 n 条并返回它们（供压缩存 MySQL）。
+
+    满容量时把将被挤出的最早几轮取出来压缩，再从 Redis 删除保留剩余。
+    """
+    key = _key(user_id, session_id)
+    raw = redis_client.lrange(key, 0, n - 1)   # 取最早 n 条
+    redis_client.ltrim(key, n, -1)             # 删掉这 n 条，保留剩余
+    redis_client.expire(key, EXPIRE_SECONDS)
+    return [json.loads(item) for item in raw]
