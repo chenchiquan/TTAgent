@@ -57,7 +57,7 @@ EXTRACT_PROMPT = """你是玩家记忆提取器。从下面这批三角洲行动
 
 ## 输出格式
 Output in JSON format. 严格输出 JSON 数组，无候选记忆时输出空数组 []：
-[{{"category":"weapon","memory_key":"weapon.recoil_preference","memory_value":{{"preference":"low","description":"倾向低后坐力枪械"}},"confidence":0.85,"evidence":"玩家说'我喜欢后坐力小的枪'","source_message_ids":[3],"expression_type":"explicit","memory_action":"create"}}]
+[{"category":"weapon","memory_key":"weapon.recoil_preference","memory_value":{"preference":"low","description":"倾向低后坐力枪械"},"confidence":0.85,"evidence":"玩家说'我喜欢后坐力小的枪'","source_message_ids":[3],"expression_type":"explicit","memory_action":"create"}]
 
 如果这批对话没有可提取的长期偏好，直接输出 []，不要编造。
 
@@ -82,24 +82,31 @@ def extract_candidates(user_id: int, dialog: list[dict]) -> list[dict]:
     if not dialog:
         return []
 
-    # 拼对话文本
+    # 只取 user 消息参与提取（assistant 回复是 AI 生成的，不是玩家偏好）
+    user_msgs = [d for d in dialog if d["role"] == "user"]
+    if not user_msgs:
+        return []
+
+    # 拼对话文本（只含 user 消息）
     dialog_text = "\n".join(
-        f"[{d['message_id']}] {d['role']}: {d['content']}" for d in dialog
+        f"[{d['message_id']}] {d['content']}" for d in user_msgs
     )
     # 消息id对照（让 LLM 知道每个 id 对应哪条）
     msg_ids = "\n".join(
-        f"消息{d['message_id']}: {d['role']}说「{d['content'][:40]}...」"
+        f"消息{d['message_id']}: 玩家说「{d['content'][:40]}...」"
         if len(d['content']) > 40 else
-        f"消息{d['message_id']}: {d['role']}说「{d['content']}」"
-        for d in dialog
+        f"消息{d['message_id']}: 玩家说「{d['content']}」"
+        for d in user_msgs
     )
 
     try:
+        # 用 replace 做模板替换，避免 str.format 把示例 JSON 的花括号当占位符
+        prompt = (EXTRACT_PROMPT
+                  .replace("{dialog}", dialog_text)
+                  .replace("{message_ids}", msg_ids))
         resp = _extract_client.chat.completions.create(
             model=settings.LLM_MODEL_ID,
-            messages=[{"role": "user", "content": EXTRACT_PROMPT.format(
-                dialog=dialog_text, message_ids=msg_ids
-            )}],
+            messages=[{"role": "user", "content": prompt}],
             response_format={"type": "json_object"},  # DeepSeek JSON 模式
         )
         raw = resp.choices[0].message.content or ""
