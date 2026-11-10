@@ -2,16 +2,11 @@
 
 用 OpenAI SDK 调 DeepSeek（OpenAI 兼容 API），流式返回逐 token。
 阶段2：从 Redis 取短期记忆（最近 K 轮），回复后存回。
-阶段3：满 K 轮时把最早的压缩存 MySQL 长期记忆，再从 Redis 删除保留剩余。
 """
 from openai import OpenAI
 
 from config.settings import settings
-from memory.short_term import load_recent, append_turn, trim_head, MAX_ROUNDS
-from memory.long_term import compress_and_store
-
-# 满容量时压缩最早的几条（= 最早 4 轮 = 8 条消息）
-COMPRESS_COUNT = 8
+from memory.short_term import load_recent, append_turn
 
 # DeepSeek 客户端（OpenAI 兼容）
 client = OpenAI(
@@ -25,7 +20,7 @@ def chat_stream(message: str, user_id: int, session_id: str, system_prompt: str)
 
     Args:
         message: 用户本次消息
-        user_id: 用户 id（从 JWT 解析，用于 Redis/MySQL 隔离）
+        user_id: 用户 id（从 JWT 解析，用于 Redis 隔离）
         session_id: 对话 id（前端生成，区分对话线程）
         system_prompt: 系统提示词（含何涛风格）
     Yields:
@@ -34,20 +29,12 @@ def chat_stream(message: str, user_id: int, session_id: str, system_prompt: str)
     # 1. 从 Redis 取最近 K 轮原文作为历史
     recent = load_recent(user_id, session_id)
 
-    # 2. 满容量先压缩最早的几轮存 MySQL，再从 Redis 删除保留剩余
-    #    （阶段4在此之后插入召回的长期记忆：
-    #     messages = [system] + [recall] + recent + [本次user]）
-    if len(recent) >= MAX_ROUNDS * 2:
-        overflow = trim_head(user_id, session_id, COMPRESS_COUNT)  # 取出+删除最早 8 条
-        compress_and_store(user_id, session_id, overflow)          # 压缩存 MySQL
-        recent = recent[COMPRESS_COUNT:]                           # 本地列表同步砍前 8 条
-
-    # 3. 拼 messages：system + 历史 + 本次 user
+    # 2. 拼 messages：system + 历史 + 本次 user
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(recent)
     messages.append({"role": "user", "content": message})
 
-    # 4. 流式调用，同时累积完整回复
+    # 3. 流式调用，同时累积完整回复
     full_reply = []
     stream = client.chat.completions.create(
         model=settings.LLM_MODEL_ID,
@@ -61,7 +48,7 @@ def chat_stream(message: str, user_id: int, session_id: str, system_prompt: str)
                 full_reply.append(delta)
                 yield delta
     finally:
-        # 5. 本轮结束存回 Redis（user + assistant 配对）
+        # 4. 本轮结束存回 Redis（user + assistant 配对）
         append_turn(user_id, session_id, "user", message)
         reply = "".join(full_reply)
         if reply:
