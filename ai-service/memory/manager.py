@@ -17,6 +17,7 @@ import re
 
 from memory.models import PlayerMemoryKv, STATUS_ACTIVE
 from memory import store
+from memory.catalog import invalidate_catalog
 
 # ===== 校验常量（JSON第三层保障）=====
 ALLOWED_CATEGORIES = {"weapon", "map", "ammo", "combat"}
@@ -174,6 +175,11 @@ def process_candidates(user_id: int, candidates: list[dict]) -> dict:
                 # inferred/contradict 推断冲突：不覆盖，保留双方，等更多证据
                 print(f"[manager] 冲突不覆盖 user_id={user_id} key={key} 旧pref={old_pref} 新pref={new_pref} expr={expr} (等更多证据)")
                 result["skipped"] += 1
+
+    # 记忆有变化时失效 Catalog 缓存（下次 get_catalog 自动重建）
+    if result["created"] + result["reinforced"] + result["updated"] + result["rejected"] > 0:
+        invalidate_catalog(user_id)
+        print(f"[manager] 失效 Catalog 缓存 user_id={user_id}")
 
     return result
 
