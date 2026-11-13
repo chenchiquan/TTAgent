@@ -3,12 +3,15 @@
 用 OpenAI SDK 调 DeepSeek（OpenAI 兼容 API），流式返回逐 token。
 阶段2：从 Redis 取短期记忆（最近 K 轮），回复后存回。
 阶段3b：对话前检索相关长期记忆注入 system prompt（按需检索，不全部塞）。
+阶段3c：对话后触发判断，满足条件发 Kafka 异步提取记忆。
 """
 from openai import OpenAI
 
 from config.settings import settings
 from memory.short_term import load_recent, append_turn
 from memory.retriever import retrieve_memories
+from memory.trigger import should_trigger
+from memory.kafka_producer import send_extract_task
 
 # DeepSeek 客户端（OpenAI 兼容）
 client = OpenAI(
@@ -62,8 +65,20 @@ def chat_stream(message: str, user_id: int, session_id: str, system_prompt: str)
                 full_reply.append(delta)
                 yield delta
     finally:
-        # 5. 本轮结束存回 Redis（user + assistant 配对）
-        append_turn(user_id, session_id, "user", message)
+        # 5. 本轮结束存回 Redis（user + assistant 配对），拿 message_id 供追溯
+        user_msg_id = append_turn(user_id, session_id, "user", message)
         reply = "".join(full_reply)
         if reply:
             append_turn(user_id, session_id, "assistant", reply)
+
+        # 6. 触发判断：满足条件发 Kafka 异步提取记忆（不阻塞对话）
+        if user_msg_id:
+            try:
+                trig = should_trigger(user_id, session_id, message)
+                if trig["should_trigger"]:
+                    send_extract_task(
+                        user_id, session_id,
+                        trig["trigger_type"], message, user_msg_id,
+                    )
+            except Exception as e:
+                print(f"[chat] 触发/发送 Kafka 失败（不阻塞对话）user_id={user_id}: {e}")
