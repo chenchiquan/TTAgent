@@ -15,6 +15,7 @@ from config.settings import settings
 from memory.store import Session, ChatHistory
 from memory.extractor import extract_candidates
 from memory.manager import process_candidates
+from memory.summarizer import summarize_if_needed
 
 # 消费时取上下文：该消息之前取几条（给 Extractor 足够上下文）
 CONTEXT_ROUNDS_BEFORE = 4  # 取该消息之前 4 条（2 轮）
@@ -76,6 +77,14 @@ def _process_message(payload: dict):
     # 3. Manager 校验比对写库
     result = process_candidates(user_id, candidates)
     print(f"[kafka_consumer] Manager 处理结果: {result}")
+
+    # 4. 检查是否需要生成主题摘要（攒够对话量才触发）
+    try:
+        summ = summarize_if_needed(user_id, session_id)
+        if summ.get("summarized"):
+            print(f"[kafka_consumer] 主题摘要生成: {summ}")
+    except Exception as e:
+        print(f"[kafka_consumer] 摘要生成失败（不影响主流程）: {e}")
 
 
 def _fetch_context_dialog(user_id: int, session_id: str, message_id: int) -> list[dict]:
