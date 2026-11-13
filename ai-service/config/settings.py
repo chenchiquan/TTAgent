@@ -30,6 +30,12 @@ class Settings:
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
 
+    # Kafka（记忆异步提取）
+    KAFKA_HOST: str = os.getenv("KAFKA_HOST", "localhost")
+    KAFKA_PORT: int = int(os.getenv("KAFKA_PORT", "9092"))
+    KAFKA_TOPIC_MEMORY_EXTRACT: str = os.getenv("KAFKA_TOPIC_MEMORY_EXTRACT", "memory-extract")
+    KAFKA_CONSUMER_GROUP: str = os.getenv("KAFKA_CONSUMER_GROUP", "memory-extractor")
+
     # JWT（后续使用）
     JWT_SECRET: str = os.getenv("JWT_SECRET", "change_me")
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")

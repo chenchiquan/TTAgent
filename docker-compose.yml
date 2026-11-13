@@ -24,6 +24,25 @@ services:
     volumes:
       - ttagent-redis-data:/data
 
+  kafka:
+    image: bitnami/kafka:3.7   # KRaft 模式，不用 ZooKeeper
+    container_name: ttagent-kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"   # 宿主 9092 方便本地 Python 连
+    environment:
+      # KRaft 模式配置（单节点同时当 controller 和 broker，不依赖 ZooKeeper）
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092   # 容器内用 kafka:9092 访问
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+    volumes:
+      - ttagent-kafka-data:/bitnami/kafka
+
   admin:
     # 部署时 docker-compose pull 拉这里；本地开发可 docker-compose build
     image: docker.io/pathfinderccq/ttagent-admin:latest
@@ -50,10 +69,13 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - KAFKA_HOST=kafka        # 容器内用 kafka:9092 访问
+      - KAFKA_PORT=9092
     ports:
       - "8000:8000"   # 开到宿主方便调试，生产可去掉
     depends_on:
       - redis
+      - kafka
 
   frontend:
     image: docker.io/pathfinderccq/ttagent-frontend:latest
@@ -68,3 +90,4 @@ services:
 volumes:
   ttagent-mysql-data:
   ttagent-redis-data:
+  ttagent-kafka-data:
